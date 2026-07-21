@@ -1,26 +1,39 @@
+---
+theme: nmt
+layout: cover
+title: SaaS-2-BED – Session 01
+info: Introduction & REST API Foundations (Laravel 12)
+transition: slide-left
+mdc: true
+---
+
 # 🎞️ SaaS‑2‑BED – Session 01
-### *Introduction & REST API Foundations (Laravel 12)*
+
+### _Introduction & REST API Foundations (Laravel 12)_
 
 ---
 
-# 🟦 slide
+
 # **Welcome & Energiser**
-### *Three‑word intros + “Great API” share*
+
+### _Three‑word intros + “Great API” share_
 
 <!-- Presenter Notes: Set tone, connect cohort, and surface examples of good APIs. Housekeeping: LMS access, repo hygiene, Laragon services check. Purpose: anchor later principles in prior experiences. -->
 
 ---
 
-# 🟦 slide
+
 # **Unit Overview**
-### *Assessments, tools, expectations*
+
+### _Assessments, tools, expectations_
 
 <!-- Presenter Notes: Assessments: Portfolio + KBA (Session 03). Tools: Laragon, Laravel 12, Postman, Git Bash, SQLite. Emphasize professional workflow and commit discipline. -->
 
 ---
 
-# 🟦 slide
+
 # **Mental Set: Request Journey**
+
 ### Browser → API → DB → Response
 
 ```mermaid
@@ -33,11 +46,12 @@ sequenceDiagram
     D-->>A: Result set / write outcome
     A-->>B: JSON response + status + headers
 ```
+
 <!-- Presenter Notes: Clarify roles and stateless interactions; highlight how headers (Accept/Content-Type) direct behavior. -->
 
 ---
 
-# 🟦 slide
+
 # **Session Objectives**
 
 - Explain REST constraints & HTTP semantics
@@ -49,8 +63,9 @@ sequenceDiagram
 
 ---
 
-# 🟦 slide
+
 # **REST: What & Why**
+
 ### Architectural style, not a protocol
 
 - Resources (nouns), representations (JSON), stateless
@@ -60,23 +75,23 @@ sequenceDiagram
 
 ---
 
-# 🟦 slide
+
 # **HTTP Verbs (Methods)**
 
-| Verb | Use |
-|---|---|
-| GET | Retrieve |
-| POST | Create / process |
-| PUT | Replace entire resource |
-| PATCH | Partial update |
-| DELETE | Remove |
-| OPTIONS | Discover capabilities |
+| Verb    | Use                     |
+| ------- | ----------------------- |
+| GET     | Retrieve                |
+| POST    | Create / process        |
+| PUT     | Replace entire resource |
+| PATCH   | Partial update          |
+| DELETE  | Remove                  |
+| OPTIONS | Discover capabilities   |
 
 <!-- Presenter Notes: Respect method semantics—build predictable contracts clients can rely on. -->
 
 ---
 
-# 🟦 slide
+
 # **Idempotency & Safety**
 
 - Idempotent: GET, PUT, DELETE (safe methods + PUT/DELETE)
@@ -86,7 +101,7 @@ sequenceDiagram
 
 ---
 
-# 🟦 slide
+
 # **Status Codes (Core Set)**
 
 - 200 OK, 201 Created (+ Location), 204 No Content
@@ -97,7 +112,7 @@ sequenceDiagram
 
 ---
 
-# 🟦 slide
+
 # **Headers & Content Negotiation**
 
 - `Accept: application/json` (client preference)
@@ -108,8 +123,9 @@ sequenceDiagram
 
 ---
 
-# 🟦 slide
+
 # **Live Demo Setup (Laragon)**
+
 ### New Laravel API project
 
 ```bash
@@ -123,7 +139,7 @@ php artisan serve
 
 ---
 
-# 🟦 slide
+
 # **First Route: Hello JSON**
 
 ```php
@@ -136,7 +152,7 @@ Route::get('/hello', fn() => response()->json(['message' => 'Hello API!'], 200))
 
 ---
 
-# 🟦 slide
+
 # **Resourceful Routes**
 
 ```php
@@ -148,7 +164,7 @@ Route::apiResource('courses', CourseController::class);
 
 ---
 
-# 🟦 slide
+
 # **Controller (Read‑only baseline)**
 
 ```php
@@ -161,8 +177,9 @@ public function show($id) { return Course::findOrFail($id); }
 
 ---
 
-# 🟦 slide
+
 # **Industry‑Standard JSON Hints**
+
 ### API Resources & JSON:API
 
 ```bash
@@ -173,8 +190,9 @@ php artisan make:resource CourseResource
 
 ---
 
-# 🟦 slide
+
 # **Guided Practice (Team)**
+
 ### “Courses” – GET All, GET One (SQLite next)
 
 **Steps:** create `database/database.sqlite`; set `.env` to sqlite; make model+migration; seed two rows; controller returns Resource collection + item; test with Postman.
@@ -183,8 +201,9 @@ php artisan make:resource CourseResource
 
 ---
 
-# 🟦 slide
+
 # **Independent Practice**
+
 ### POST + Validation + 201 Location
 
 - Make FormRequest, rules for `code` and `title`
@@ -195,7 +214,7 @@ php artisan make:resource CourseResource
 
 ---
 
-# 🟦 slide
+
 # **Student Activity – Expanded**
 
 - Build GET/GET one/POST for `courses` with Resources and validation
@@ -206,7 +225,7 @@ php artisan make:resource CourseResource
 
 ---
 
-# 🟦 slide
+
 # **PEST: First Test**
 
 ```php
@@ -221,7 +240,7 @@ it('returns courses', function () {
 
 ---
 
-# 🟦 slide
+
 # **Mermaid: Resource Map**
 
 ```mermaid
@@ -239,7 +258,7 @@ flowchart LR
 
 ---
 
-# 🟦 slide
+
 # **Terminology Recap**
 
 - REST, Resource, Representation, Idempotency, Status Codes, Content Negotiation, API Resource, Form Request, SQLite, Postman, Pest
@@ -248,8 +267,9 @@ flowchart LR
 
 ---
 
-# 🟦 slide
+
 # **Mini‑Project Kickoff**
+
 ### Student Information API
 
 - Today: scaffold Student endpoints (GET/GET one/POST) with Resources + validation
@@ -259,7 +279,7 @@ flowchart LR
 
 ---
 
-# 🟦 slide
+
 # **Summary & Next Steps**
 
 - REST constraints; HTTP semantics; correct status codes
