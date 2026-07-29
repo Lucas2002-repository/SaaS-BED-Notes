@@ -151,7 +151,7 @@ add_to_path() {
 # as verifying commands/folders exist before creating the alias
 #
 # Examples of how to use:
-# 
+#
 # add_alias 'alias-edit' 'nano /c/Users/$USERNAME/.aliases'
 # add_alias laragon 'cd /c/ProgramData/Laragon/'
 # add_alias emqx-stop 'cd /c/Laragon/bin/mqtt/emqx/bin && emqx stop'
@@ -461,6 +461,261 @@ _probe_python_version() {
 }
 
 # ---------------------------------------------------------------------
+# Locate latest Composer installation and add it to PATH
+
+find_latest_composer() {
+
+    local search_dirs=(
+        "/c/ProgramData/Laragon/bin/composer"
+        "/c/Laragon/bin/composer"
+        "/c/ProgramData/Laragon/bin"
+        "/c/Laragon/bin"
+        "/c/ProgramData/ComposerSetup/bin"
+        "/c/Program Files/Composer"
+    )
+
+    local composer_executables=()
+    local composer_exe
+    local composer_version
+    local latest_composer=""
+    local latest_version=""
+    local composer_dir=""
+
+    cli_info "Searching for Composer installations."
+
+    for search_dir in "${search_dirs[@]}"; do
+        [ -d "$search_dir" ] || continue
+
+        while IFS= read -r composer_exe; do
+            composer_executables+=("$composer_exe")
+        done < <(
+            find "$search_dir" \
+                -type f \
+                \( -iname "composer.bat" -o -iname "composer.phar" \) \
+                2>/dev/null
+        )
+    done
+
+    if [ "${#composer_executables[@]}" -eq 0 ]; then
+        cli_warning "No Composer installation found."
+        return 1
+    fi
+
+    for composer_exe in "${composer_executables[@]}"; do
+
+        if [[ "$composer_exe" == *.phar ]]; then
+            composer_version=$(
+                php "$composer_exe" --version 2>/dev/null |
+                head -n1 |
+                grep -oE '[0-9]+\.[0-9]+\.[0-9]+'
+            )
+        else
+            composer_version=$(
+                "$composer_exe" --version 2>/dev/null |
+                head -n1 |
+                grep -oE '[0-9]+\.[0-9]+\.[0-9]+'
+            )
+        fi
+
+        [ -n "$composer_version" ] || continue
+
+        if [ -z "$latest_version" ] || \
+           [ "$(printf "%s\n%s\n" "$latest_version" "$composer_version" | sort -V | tail -n1)" = "$composer_version" ]; then
+
+            latest_version="$composer_version"
+            latest_composer="$composer_exe"
+
+        fi
+    done
+
+    if [ -z "$latest_composer" ]; then
+        cli_warning "Composer installations were found, but their versions could not be read."
+        return 1
+    fi
+
+    composer_dir="$(dirname "$latest_composer")"
+
+    add_to_path "$composer_dir"
+
+    hash -r
+
+    cli_success "Selected Composer $latest_version"
+
+    if command -v composer >/dev/null 2>&1; then
+        cli_info "Current Composer: $(composer --version | head -n1)"
+    fi
+}
+
+# ---------------------------------------------------------------------
+# Locate latest version of PHP and add to path
+
+find_latest_php() {
+  local search_dirs=(
+    "/c/ProgramData/Laragon/bin/php"
+    "/c/Laragon/bin/php"
+  )
+
+  local php_executables=()
+  local php_exe
+  local php_version
+  local latest_php=""
+  local latest_version=""
+
+  for search_dir in "${search_dirs[@]}"; do
+    [ -d "$search_dir" ] || continue
+
+    while IFS= read -r php_exe; do
+      php_executables+=("$php_exe")
+    done < <(
+      find "$search_dir" \
+        -mindepth 2 \
+        -maxdepth 2 \
+        -type f \
+        -iname "php.exe" \
+        2>/dev/null
+    )
+  done
+
+  if [ "${#php_executables[@]}" -eq 0 ]; then
+    cli_warning "No Laragon PHP installation was found."
+    return 1
+  fi
+
+  for php_exe in "${php_executables[@]}"; do
+    php_version=$(
+      "$php_exe" -r 'echo PHP_VERSION;' 2>/dev/null |
+      tr -d '\r'
+    )
+
+    [ -n "$php_version" ] || continue
+
+    if [ -z "$latest_version" ] ||
+       [ "$(printf '%s\n%s\n' "$latest_version" "$php_version" |
+           sort -V |
+           tail -n 1)" = "$php_version" ]; then
+      latest_version="$php_version"
+      latest_php="$php_exe"
+    fi
+  done
+
+  if [ -z "$latest_php" ]; then
+    cli_warning "PHP installations were found, but their versions could not be read."
+    return 1
+  fi
+
+  add_to_path "$(dirname "$latest_php")"
+  export PHPRC="$(dirname "$latest_php")"
+
+  cli_info "Current PHP: $("$latest_php" --version | head -n 1)"
+}
+
+# ---------------------------------------------------------------------
+# Locate latest installed version of Node.js and add it to PATH
+# Node.js installations normally include:
+#   node.exe
+#   npm.cmd
+#   npx.cmd
+
+find_latest_node() {
+  local search_dirs=(
+    "/c/ProgramData/Laragon/bin/nodejs"
+    "/c/ProgramData/Laragon/bin/node"
+    "/c/Laragon/bin/nodejs"
+    "/c/Laragon/bin/node"
+    "/c/Program Files/nodejs"
+    "/c/Program Files (x86)/nodejs"
+  )
+
+  local node_executables=()
+  local node_exe
+  local node_version
+  local latest_node=""
+  local latest_version=""
+  local node_dir=""
+  local npm_command=""
+  local npx_command=""
+
+  cli_info "Searching for Node.js installations."
+
+  for search_dir in "${search_dirs[@]}"; do
+    [ -d "$search_dir" ] || continue
+
+    while IFS= read -r node_exe; do
+      node_executables+=("$node_exe")
+    done < <(
+      find "$search_dir" \
+        -type f \
+        -iname "node.exe" \
+        -not -path "*/node_modules/*" \
+        2>/dev/null
+    )
+  done
+
+  if [ "${#node_executables[@]}" -eq 0 ]; then
+    cli_warning "No Node.js installation was found."
+    return 1
+  fi
+
+  for node_exe in "${node_executables[@]}"; do
+    node_version=$(
+      "$node_exe" --version 2>/dev/null |
+      tr -d '\r' |
+      sed 's/^v//'
+    )
+
+    [ -n "$node_version" ] || continue
+
+    if [ -z "$latest_version" ] ||
+       [ "$(printf '%s\n%s\n' "$latest_version" "$node_version" |
+           sort -V |
+           tail -n 1)" = "$node_version" ]; then
+      latest_version="$node_version"
+      latest_node="$node_exe"
+    fi
+  done
+
+  if [ -z "$latest_node" ]; then
+    cli_warning "Node.js installations were found, but their versions could not be read."
+    return 1
+  fi
+
+  node_dir="$(dirname "$latest_node")"
+
+  # Add selected Node directory to PATH
+  add_to_path "$node_dir"
+
+  # Clear Bash's cached command locations
+  hash -r
+
+  cli_success "Selected Node.js $latest_version from $node_dir."
+  cli_info "Current Node: $(node --version 2>/dev/null)"
+
+  # Windows Node installations normally provide npm.cmd and npx.cmd.
+  # Git Bash may expose them as npm and npx automatically.
+  if command -v npm >/dev/null 2>&1; then
+    npm_command="$(command -v npm)"
+    cli_info "Current npm: $(npm --version 2>/dev/null)"
+    cli_info "npm path: $npm_command"
+  elif [ -f "$node_dir/npm.cmd" ]; then
+    cli_warning "npm.cmd exists but npm is not available as a Bash command."
+    cli_info "npm location: $node_dir/npm.cmd"
+  else
+    cli_warning "npm was not found in the selected Node.js installation."
+  fi
+
+  if command -v npx >/dev/null 2>&1; then
+    npx_command="$(command -v npx)"
+    cli_info "Current npx: $(npx --version 2>/dev/null)"
+    cli_info "npx path: $npx_command"
+  elif [ -f "$node_dir/npx.cmd" ]; then
+    cli_warning "npx.cmd exists but npx is not available as a Bash command."
+    cli_info "npx location: $node_dir/npx.cmd"
+  else
+    cli_warning "npx was not found in the selected Node.js installation."
+  fi
+}
+
+# ---------------------------------------------------------------------
 # Locate latest version of Python and add to path
 
 find_latest_python() {
@@ -631,19 +886,15 @@ _remove_bashrc() {
     fi
 }
 
-
 # =====================================================================
 # Add JRE location as environment variable
 export EXE4J_JAVA_HOME="/c/laragon/bin/Java/jdk-25.0.1+8-jre/bin"
-
 
 # =====================================================================
 # Required basic aliases. Others added tot he .aliases file
 add_alias la 'ls -ah'
 add_alias ll 'ls -lah'
 add_alias ls 'ls -F --color=auto --show-control-chars'
-
-
 
 # =====================================================================
 # Add tools and environments to PATH
@@ -669,7 +920,6 @@ add_to_path "/c/ProgramData/Laragon/bin/mqtt/mosquitto"
 add_to_path "/c/ProgramData/Laragon/bin/marp"
 add_to_path "/c/ProgramData/Laragon/bin/mqtt/nanomq/bin"
 
-
 # ---------------------------------------------------------------------
 # TDM and Home Computers
 add_to_path /c/Laragon/bin/mailpit
@@ -687,8 +937,6 @@ add_to_path "/c/Program\ Files/Erlang\ OTP/bin/"
 add_to_path "/C/laragon/bin/DbVisualizer"
 add_to_path "/C/laragon/bin/Java/jdk-25.0.1+8-jre/bin"
 
-
-#
 # Any Windows PC
 add_to_path "/c/Program Files/7-Zip"
 
@@ -696,20 +944,19 @@ add_to_path "/c/Program Files/7-Zip"
 # Source aliases if available
 [ -f "$HOME/.aliases" ] && source "$HOME/.aliases"
 
-
-
 # =====================================================================
+# Finad and load the latest versions
 cli_blank_f " "
+find_latest_composer
+find_latest_node
 find_latest_python
+find_latest_php
 cli_blank_f " "
-
-
 
 # =====================================================================
 # End-of-initialization message (single line) and cleanup
 cli_blank " "
 cli_completed
-
 
 # =====================================================================
 # Greetings
@@ -723,7 +970,6 @@ case $HOUR in
   1[2-7])       cli_info "Good afternoon" ;;
   *)            cli_info "Good evening" ;;
 esac
-
 
 # ---------------------------------------------------------------------
 # Welcome message
