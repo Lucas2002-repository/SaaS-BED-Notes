@@ -1,0 +1,72 @@
+name: laravel-mongodb
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        MONGODB_EXTENSION_VERSION: "2.1.1"
+    image: ghcr.io/REPLACE_WITH_COLLEGE_ORG/laravel-php:8.4-bookworm-v1
+    restart: unless-stopped
+    working_dir: /var/www/html
+    volumes:
+      - ./:/var/www/html
+    environment:
+      APP_ENV: local
+      APP_DEBUG: "true"
+      LOG_CHANNEL: stderr
+      DB_CONNECTION: mongodb
+      DB_URI: mongodb://${MONGO_ROOT_USERNAME:-root}:${MONGO_ROOT_PASSWORD:-development-password}@mongodb:27017/?authSource=admin
+      DB_DATABASE: ${MONGO_DATABASE:-laravel}
+    depends_on:
+      mongodb:
+        condition: service_healthy
+    networks:
+      - laravel
+
+  nginx:
+    # Replace the tag with the IT-approved GHCR mirror and digest.
+    image: nginx:stable-bookworm
+    restart: unless-stopped
+    ports:
+      - "${APP_PORT:-8080}:80"
+    volumes:
+      - ./:/var/www/html:ro
+      - ./docker/nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      - app
+    networks:
+      - laravel
+
+  mongodb:
+    # Replace the tag with the IT-approved GHCR mirror and digest.
+    image: mongo:8.0.28-noble
+    restart: unless-stopped
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_ROOT_USERNAME:-root}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_ROOT_PASSWORD:-development-password}
+      MONGO_INITDB_DATABASE: ${MONGO_DATABASE:-laravel}
+    volumes:
+      - mongodb-data:/data/db
+    ports:
+      - "${MONGO_PORT:-27017}:27017"
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "mongosh --quiet --username \"$${MONGO_INITDB_ROOT_USERNAME}\" --password \"$${MONGO_INITDB_ROOT_PASSWORD}\" --authenticationDatabase admin --eval \"quit(db.adminCommand('ping').ok ? 0 : 2)\""
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+    networks:
+      - laravel
+
+volumes:
+  mongodb-data:
+
+networks:
+  laravel:
+    driver: bridge
