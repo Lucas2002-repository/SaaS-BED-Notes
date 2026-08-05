@@ -237,15 +237,11 @@ Each group submits:
 
 ---
 
-Lecturer Notes
+## Notes
 
 This activity intentionally avoids implementing OAuth.
-
-The goal is for students to understand:
 
 - why authentication exists;
 - where authentication fits into an application's architecture;
 - why configuration endpoints are separated from business endpoints;
 - why protecting API credentials is essential.
-
-Implementation of OAuth, access tokens and authenticated API requests will be covered in later practical sessions once students have a solid understanding of the underlying concepts.
