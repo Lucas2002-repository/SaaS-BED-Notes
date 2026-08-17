@@ -1,19 +1,17 @@
 # Laravel Installation Guide (Windows + Git Bash + Laragon)
 
-This guide installs a fresh Laravel project using **Git Bash** on Windows with **Laragon**.
+This guide walks through creating a fresh Laravel project on Windows using **Git Bash** and **Laragon**.
 
----
+## Before You Start
 
-# Prerequisites
+Install or confirm:
 
-Ensure the following are installed:
-
-- Laragon (PHP, MySQL, Composer)
+- Laragon with PHP, MySQL, and Composer
 - Git for Windows
-- Node.js (LTS)
+- Node.js LTS
 - Visual Studio Code (recommended)
 
-Verify the installations:
+Check that the core tools are available:
 
 ```bash
 php -v
@@ -23,38 +21,50 @@ npm -v
 git --version
 ```
 
----
+## Quick Setup Flow
 
-# 1. Start Laragon
+1. Start Laragon and make sure web and database services are running.
+2. Open Git Bash in Laragon's `www` folder.
+3. Create the Laravel project with Composer.
+4. Install Node dependencies and build assets.
+5. Create the database and update `.env`.
+6. Run migrations.
+7. Open the app using either Laragon's `.test` host or `php artisan serve`.
+
+## 1. Start Laragon
 
 Open **Laragon** and click:
 
-```
+```text
 Start All
 ```
 
-Confirm the following services are running:
+Confirm these services are running:
 
 - Apache or Nginx
 - MySQL
 
----
+## 2. Open Git Bash in the Web Root
 
-# 2. Open Git Bash
+Move to Laragon's `www` directory.
 
-Navigate to your web directory.
+Common locations:
 
-Example:
+- TAFE/lab setup:
 
 ```bash
 cd /c/ProgramData/Laragon/www
 ```
 
----
+- Default home install:
 
-# 3. Create a New Laravel Project
+```bash
+cd /c/laragon/www
+```
 
-Replace `my-project` with your project name.
+## 3. Create a New Laravel Project
+
+Replace `my-project` with your own project name.
 
 ```bash
 composer create-project laravel/laravel my-project
@@ -66,9 +76,7 @@ Example:
 composer create-project laravel/laravel student-management
 ```
 
----
-
-# 4. Enter the Project
+## 4. Enter the Project Folder
 
 ```bash
 cd my-project
@@ -80,61 +88,49 @@ Example:
 cd student-management
 ```
 
----
-
-# 5. Install JavaScript Dependencies
+## 5. Install Frontend Dependencies
 
 ```bash
 npm install
 ```
 
----
+## 6. Build Vite Assets
 
-# 6. Build Vite Assets
+Use one of the following:
 
-Development build:
+- For active development:
 
 ```bash
 npm run dev
 ```
 
-Leave this terminal running while developing.
+Leave that terminal running while you work.
 
-Alternatively build once:
+- For a one-off production build:
 
 ```bash
 npm run build
 ```
 
----
+## 7. Create the Environment File If Needed
 
-# 7. Create the Environment File (if required)
-
-Laravel normally creates this automatically.
-
-If it doesn't:
+Laravel usually creates `.env` automatically. If it does not, run:
 
 ```bash
 cp .env.example .env
 ```
 
----
-
-# 8. Generate the Application Key
+## 8. Generate the Application Key
 
 ```bash
 php artisan key:generate
 ```
 
----
+## 9. Create the Database
 
-# 9. Create a Database
+In Laragon, open:
 
-Open Laragon.
-
-Go to:
-
-```
+```text
 Menu
 → MySQL
 → HeidiSQL
@@ -144,21 +140,13 @@ Create a new database.
 
 Example:
 
-```
+```text
 student_management
 ```
 
----
+## 10. Configure the Database Connection
 
-# 10. Configure the Database
-
-Open:
-
-```
-.env
-```
-
-Update:
+Open `.env` and update the database settings:
 
 ```env
 DB_CONNECTION=mysql
@@ -171,35 +159,31 @@ DB_PASSWORD=
 
 Laragon's default MySQL password is blank.
 
----
-
-# 11. Run Database Migrations
+## 11. Run Database Migrations
 
 ```bash
 php artisan migrate
 ```
 
-Expected output:
+Expected result:
 
-```
+```text
 Migrating...
 
 DONE
 ```
 
----
+## 12. Install Authentication (Optional)
 
-# 12. Install Authentication (Optional)
+If you want Laravel authentication scaffolding, one common option is Breeze.
 
-Laravel provides starter kits.
-
-Example using Breeze:
+Install the package:
 
 ```bash
 composer require laravel/breeze --dev
 ```
 
-Install:
+Run the installer:
 
 ```bash
 php artisan breeze:install
@@ -212,55 +196,58 @@ npm install
 npm run dev
 ```
 
-Run migrations:
+Run migrations again:
 
 ```bash
 php artisan migrate
 ```
 
----
+## 13. Open the Application
 
-# 13. Start the Laravel Development Server
+### Option A: Use Laragon Virtual Hosts
+
+If the project sits inside Laragon's `www` folder, Laragon usually creates a local virtual host automatically.
+
+Example project path:
+
+```text
+C:\ProgramData\Laragon\www\student-management
+```
+
+Open:
+
+```text
+http://student-management.test
+```
+
+If this works, you do not need to run `php artisan serve`.
+
+### Option B: Use Laravel's Built-In Server
+
+If you are not using the Laragon virtual host, start Laravel manually:
 
 ```bash
 php artisan serve
 ```
 
-Open:
+Then open:
 
-```
+```text
 http://127.0.0.1:8000
 ```
 
----
+## Practical Checks
 
-# 14. Alternatively Use Laragon Virtual Hosts
+Use these checks if something does not work as expected:
 
-If the project is inside:
-
-```
-C:\ProgramData\Laragon\www\
-```
-
-Laragon automatically creates a virtual host.
-
-Access the project at:
-
-```
-http://my-project.test
-```
-
-Example:
-
-```
-http://student-management.test
-```
-
-No need to run `php artisan serve` when using Laragon's virtual host.
+- `php artisan about` to confirm Laravel is installed correctly
+- `php artisan migrate:status` to confirm the database connection works
+- `npm run dev` to confirm Vite is building assets
+- Check that the project folder is inside Laragon's `www` directory if the `.test` URL does not resolve
 
 ---
 
-# 15. Useful Artisan Commands
+## Useful Artisan Commands
 
 Clear cache:
 
@@ -304,9 +291,7 @@ List Artisan commands:
 php artisan list
 ```
 
----
-
-# 16. Useful NPM Commands
+## Useful NPM Commands
 
 Development server:
 
@@ -320,15 +305,15 @@ Production build:
 npm run build
 ```
 
----
-
-# 17. Typical Git Bash Workflow
+## Typical Git Bash Workflow
 
 Open project:
 
 ```bash
 cd /c/ProgramData/Laragon/www/student-management
 ```
+
+If you use the default home install instead of the lab setup, adjust the path accordingly.
 
 Start Vite:
 
@@ -344,9 +329,9 @@ php artisan serve
 
 If using Laragon virtual hosts, only `npm run dev` is typically required.
 
----
+## Dependency Maintenance
 
-# 18. Updating Composer Dependencies
+Composer dependencies:
 
 ```bash
 composer update
@@ -360,7 +345,7 @@ composer install
 
 ---
 
-# 19. Updating NPM Dependencies
+NPM dependencies:
 
 Install packages:
 
@@ -374,9 +359,7 @@ Update packages:
 npm update
 ```
 
----
-
-# 20. Common Troubleshooting
+## Common Troubleshooting
 
 ## Missing Application Key
 
@@ -429,8 +412,6 @@ Reinstall dependencies:
 composer install
 npm install
 ```
-
----
 
 # Recommended Folder Structure
 
